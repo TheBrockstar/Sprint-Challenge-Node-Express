@@ -24,7 +24,9 @@ const unableToGetProjectList500 = { errorMessage: "Unable to retrieve projects."
 const unableToGetProject500 = { errorMessage: "Unable to retrieve project." }
 
 // =====- Action Database Error Messages -=====
-const unableToGetActionList = { errorMessage: "Unable to retrieve actions." }
+const unableToFindActionWithId = { errorMessage: "Unable to find a project with the specified action Id." }
+const unableToGetActionList500 = { errorMessage: "Unable to retrieve actions." }
+const unableToGetAction500 = { errorMessage: "Unable to retrieve action." }
 
 
 //// ==========- Project Database Endpoints -==========
@@ -33,22 +35,21 @@ const unableToGetActionList = { errorMessage: "Unable to retrieve actions." }
 
 server.get('/api/projects', (request, response) => {
 
-    // Database Helper Promise Method
+    // Database Helper Promise Methods
     projectDb.get()
     .then( projects => response.status(200).send(projects))
     .catch(() => response.status(500).send(unableToGetProjectList500))
 });
 
+
 /// ##### READ Individual Project Endpoint #####
 
 server.get('/api/projects/:projectId', (request, response) => {
 
-    // Request Handling
+    // Extract URL Parameter
     const projectId = request.params.projectId;
 
-    console.log(projectId);
-
-    // Database Helper Promise Method
+    // Database Helper Promise Methods
     projectDb.get(projectId)
     .then( project => { 
         if ( !project ) { 
@@ -65,10 +66,28 @@ server.get('/api/projects/:projectId', (request, response) => {
 /// ##### READ All Actions Endpoint #####
 server.get('/api/actions', (request, response) => {
 
-    // Database Helper Promise Method
+    // Database Helper Promise Methods
     actionDb.get()
     .then(actions => response.status(200).send(actions))
-    .catch(() => response.status(500).send(unableToGetActionList))
+    .catch(() => response.status(500).send(unableToGetActionList500))
+});
+
+/// ##### READ Individual Action Endpoint #####
+server.get('/api/actions/:actionId', (request, response) => {
+
+    // Extract URL Parameter
+    const actionId = request.params.actionId;
+
+    // Database Helper Promise Methods
+    actionDb.get(actionId)
+    .then( action => { 
+        if ( !action ) { 
+            // Possibly unreachable
+            return response.status(404).send(unableToFindActionWithId)
+        }
+        response.status(200).send(action)
+    })
+    .catch(() => response.status(500).send(unableToGetAction500))
 });
 
 
