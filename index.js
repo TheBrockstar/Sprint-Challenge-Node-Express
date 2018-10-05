@@ -32,8 +32,9 @@ const unableToDeleteProject500 = { errorMessage: "Unable to delete project."}
 const unableToFindActionWithId = { errorMessage: "Unable to find a project with the specified action Id." }
 const missingActionData = { errorMessage: "Please provide notes and a description when creating an action." }
 const unableToGetActionList500 = { errorMessage: "Unable to retrieve actions." }
-const unableToGetAction500 = { errorMessage: "Unable to retrieve action." }
+const unableToGetAction500 = { errorMessage: "Unable to retrieve project with the specified action Id." }
 const unableToCreateAction500 = { errorMessage: "Unable to create action."}
+const unableToUpdateAction500 = { errorMessage: "Unable to update action."}
 
 
 //// ==========- Project Database Endpoints -==========
@@ -223,7 +224,43 @@ server.post('/api/projects/:projectId/actions', (request, response) => {
         .catch(() => response.status(500).send(unableToCreateAction500))
     })
     .catch(() => response.status(500).send(unableToGetProject500))
-})
+});
+
+/// ##### UPDATE Individual Action Endpoint #####
+server.put('/api/actions/:actionId', (request, response) => {
+
+    // Extract URL Parameters
+    const actionId = request.params.actionId;
+
+    // Deconstruct Request Body
+    let { description, notes, completed } = request.body;
+
+    // Construct Updated Project Body
+    let updatedAction = {};
+
+    if ( description ) {
+        updatedAction.description = description;
+    }
+
+    if ( notes ) {
+        updatedAction.notes = notes;
+    }
+
+    if ( completed ) {
+        updatedAction.completed = completed;
+    }
+
+    // Database Helper Promise Methods
+    actionDb.update(actionId, updatedAction)
+    .then( action => {
+        if ( !action ) {
+            return response.status(404).send(unableToFindActionWithId)
+        }
+
+        response.status(200).send(action);
+    })
+    .catch(() => response.status(500).send(unableToUpdateAction500))
+});
 
 
 
