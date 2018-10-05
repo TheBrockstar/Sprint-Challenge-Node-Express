@@ -24,6 +24,7 @@ const missingProjectData = { errorMessage: "Please provide a name and descriptio
 const unableToGetProjectList500 = { errorMessage: "Unable to retrieve projects." }
 const unableToGetProject500 = { errorMessage: "Unable to retrieve project with the specified project Id." }
 const unableToCreateProject500 = { errorMessage: "Unable to create project."}
+const unableToUpdateProject500 = { errorMessage: "Unable to update project."}
 
 // =====- Action Database Error Messages -=====
 const unableToFindActionWithId = { errorMessage: "Unable to find a project with the specified action Id." }
@@ -84,6 +85,43 @@ server.post('/api/projects', (request, response) => {
     projectDb.insert(newProject)
     .then(project => response.status(201).send(project))
     .catch(() => response.status(500).send(unableToCreateProject500))
+})
+
+/// ##### UPDATE Individual Project Endpoint #####
+
+server.put('/api/projects/:projectId', (request, response) => {
+
+    // Extract URL Parameters
+    const projectId = request.params.projectId;
+
+    // Deconstruct Request Body
+    let { name, description, completed } = request.body;
+
+    // Construct Updated Project Body
+    let updatedProject = {};
+
+    if ( name ) {
+        updatedProject.name = name;
+    }
+
+    if ( description ) {
+        updatedProject.description = description;
+    }
+
+    if ( completed ) {
+        updatedProject.completed = completed;
+    }
+
+    // Database Helper Promise Methods
+    projectDb.update(projectId, updatedProject)
+    .then( project => {
+        if ( !project ) {
+            return response.status(404).send(unableToFindProjectWithId)
+        }
+
+        response.status(200).send(project);
+    })
+    .catch(() => response.status(500).send(unableToUpdateProject500))
 })
 
 
