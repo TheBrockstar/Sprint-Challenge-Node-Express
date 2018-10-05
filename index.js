@@ -20,8 +20,10 @@ server.use(express.json(), cors(), morgan('combined'), helmet());
 /// ##### Error Messages #####
 // =====- Project Database Error Messages -=====
 const unableToFindProjectWithId = { errorMessage: "Unable to find a project with the specified project Id." }
+const missingProjectData = { errorMessage: "Please provide a name and description when creating a project." }
 const unableToGetProjectList500 = { errorMessage: "Unable to retrieve projects." }
 const unableToGetProject500 = { errorMessage: "Unable to retrieve project." }
+const unableToCreateProject500 = { errorMessage: "Unable to create project."}
 
 // =====- Action Database Error Messages -=====
 const unableToFindActionWithId = { errorMessage: "Unable to find a project with the specified action Id." }
@@ -60,6 +62,34 @@ server.get('/api/projects/:projectId', (request, response) => {
     })
     .catch(() => response.status(500).send(unableToGetProject500))
 })
+
+
+/// ##### CREATE Individual Project Endpoint #####
+
+server.post('/api/projects', (request, response) => {
+
+    // Deconstruct Request Body 
+    let { name, description, completed } = request.body;
+
+    // Request Validation
+    if ( !name || !description ) {
+        return response.status(400).send(missingProjectData)
+    }
+
+    if ( !completed ) {
+        completed = false;
+    }
+
+    // Construct New Project Object
+    const newProject = { "name": name, "description": description, "completed": completed };
+
+    // Database Helper Promise Methods
+    projectDb.insert(newProject)
+    .then(project => response.status(201).send(project))
+    .catch(() => response.status(500).send(unableToCreateProject500))
+})
+
+
 
 //// ==========- Action Database Endpoints -==========
 
