@@ -20,6 +20,7 @@ server.use(express.json(), cors(), morgan('combined'), helmet());
 /// ##### Error Messages #####
 // =====- Project Database Error Messages -=====
 const unableToFindProjectWithId = { errorMessage: "Unable to find a project with the specified project Id." }
+const unableToFindActionsForProjectWithId = { errorMessage: "Unable to find action for the project with the specified project Id." }
 const missingProjectData = { errorMessage: "Please provide a name and description when creating a project." }
 const noProjectsWereDeleted = { errorMessage: "No projects were deleted" }
 const unableToGetProjectList500 = { errorMessage: "Unable to retrieve projects." }
@@ -29,12 +30,13 @@ const unableToUpdateProject500 = { errorMessage: "Unable to update project."}
 const unableToDeleteProject500 = { errorMessage: "Unable to delete project."}
 
 // =====- Action Database Error Messages -=====
-const unableToFindActionWithId = { errorMessage: "Unable to find a project with the specified action Id." }
+const unableToFindActionWithId = { errorMessage: "Unable to find a action with the specified action Id." }
 const missingActionData = { errorMessage: "Please provide notes and a description when creating an action." }
 const unableToGetActionList500 = { errorMessage: "Unable to retrieve actions." }
 const unableToGetAction500 = { errorMessage: "Unable to retrieve project with the specified action Id." }
 const unableToCreateAction500 = { errorMessage: "Unable to create action."}
 const unableToUpdateAction500 = { errorMessage: "Unable to update action."}
+const unableToDeleteAction500 = { errorMessage: "Unable to delete action."}
 
 
 //// ==========- Project Database Endpoints -==========
@@ -128,7 +130,6 @@ server.put('/api/projects/:projectId', (request, response) => {
 
 
 /// ##### DELETE Individual Project Endpoint #####
-
 server.delete('/api/projects/:projectId',  (request, response) => {
 
     // Extract URL Parameters
@@ -155,6 +156,24 @@ server.delete('/api/projects/:projectId',  (request, response) => {
     })
     .catch(() => response.status(500).send(unableToGetProject500))
 });
+
+/// ##### READ All Posts of A Given Project Endpoint #####
+server.get('/api/projects/:projectId/actions', (request, response) => {
+
+    // Extract URL Parameter
+    const projectId = request.params.projectId;
+
+    // Database Helper Promise Methods
+    projectDb.getProjectActions(projectId)
+    .then( actions => { 
+        if ( !actions ) { 
+            // Possibly unreachable
+            return response.status(404).send(unableToFindActionsForProjectWithId)
+        }
+        response.status(200).send(actions)
+    })
+    .catch(() => response.status(500).send(unableToGetActionList500))
+})
 
 
 
