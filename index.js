@@ -21,10 +21,12 @@ server.use(express.json(), cors(), morgan('combined'), helmet());
 // =====- Project Database Error Messages -=====
 const unableToFindProjectWithId = { errorMessage: "Unable to find a project with the specified project Id." }
 const missingProjectData = { errorMessage: "Please provide a name and description when creating a project." }
+const noProjectsWereDeleted = { errorMessage: "No projects were deleted" }
 const unableToGetProjectList500 = { errorMessage: "Unable to retrieve projects." }
 const unableToGetProject500 = { errorMessage: "Unable to retrieve project with the specified project Id." }
 const unableToCreateProject500 = { errorMessage: "Unable to create project."}
 const unableToUpdateProject500 = { errorMessage: "Unable to update project."}
+const unableToDeleteProject500 = { errorMessage: "Unable to delete project."}
 
 // =====- Action Database Error Messages -=====
 const unableToFindActionWithId = { errorMessage: "Unable to find a project with the specified action Id." }
@@ -88,7 +90,6 @@ server.post('/api/projects', (request, response) => {
 })
 
 /// ##### UPDATE Individual Project Endpoint #####
-
 server.put('/api/projects/:projectId', (request, response) => {
 
     // Extract URL Parameters
@@ -122,7 +123,37 @@ server.put('/api/projects/:projectId', (request, response) => {
         response.status(200).send(project);
     })
     .catch(() => response.status(500).send(unableToUpdateProject500))
-})
+});
+
+
+/// ##### DELETE Individual Project Endpoint #####
+
+server.delete('/api/projects/:projectId',  (request, response) => {
+
+    // Extract URL Parameters
+    const projectId = request.params.projectId;
+
+    // Database Helper Promise Methods
+
+    projectDb.get(projectId)
+    .then( project => { 
+        
+        if ( !project ) { 
+            // Possibly unreachable
+            return response.status(404).send(unableToFindProjectWithId)
+        }
+
+        projectDb.remove(projectId)
+        .then( wasDeleted => {
+            if ( !wasDeleted ) {
+                return response.status(204).send(noProjectsWereDeleted);
+            }
+            response.status(200).send(project);
+        })
+        .catch(() => response.status(500).send(unableToDeleteProject500))
+    })
+    .catch(() => response.status(500).send(unableToGetProject500))
+});
 
 
 
