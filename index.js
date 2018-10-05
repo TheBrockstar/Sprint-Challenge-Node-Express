@@ -22,19 +22,20 @@ server.use(express.json(), cors(), morgan('combined'), helmet());
 const unableToFindProjectWithId = { errorMessage: "Unable to find a project with the specified project Id." }
 const missingProjectData = { errorMessage: "Please provide a name and description when creating a project." }
 const unableToGetProjectList500 = { errorMessage: "Unable to retrieve projects." }
-const unableToGetProject500 = { errorMessage: "Unable to retrieve project." }
+const unableToGetProject500 = { errorMessage: "Unable to retrieve project with the specified project Id." }
 const unableToCreateProject500 = { errorMessage: "Unable to create project."}
 
 // =====- Action Database Error Messages -=====
 const unableToFindActionWithId = { errorMessage: "Unable to find a project with the specified action Id." }
+const missingActionData = { errorMessage: "Please provide notes and a description when creating an action." }
 const unableToGetActionList500 = { errorMessage: "Unable to retrieve actions." }
 const unableToGetAction500 = { errorMessage: "Unable to retrieve action." }
+const unableToCreateAction500 = { errorMessage: "Unable to create action."}
 
 
 //// ==========- Project Database Endpoints -==========
 
 /// ##### READ All Projects Endpoint #####
-
 server.get('/api/projects', (request, response) => {
 
     // Database Helper Promise Methods
@@ -43,9 +44,7 @@ server.get('/api/projects', (request, response) => {
     .catch(() => response.status(500).send(unableToGetProjectList500))
 });
 
-
 /// ##### READ Individual Project Endpoint #####
-
 server.get('/api/projects/:projectId', (request, response) => {
 
     // Extract URL Parameter
@@ -63,9 +62,7 @@ server.get('/api/projects/:projectId', (request, response) => {
     .catch(() => response.status(500).send(unableToGetProject500))
 })
 
-
 /// ##### CREATE Individual Project Endpoint #####
-
 server.post('/api/projects', (request, response) => {
 
     // Deconstruct Request Body 
@@ -119,6 +116,45 @@ server.get('/api/actions/:actionId', (request, response) => {
     })
     .catch(() => response.status(500).send(unableToGetAction500))
 });
+
+/// ##### CREATE Individual Action Endpoint #####
+server.post('/api/projects/:projectId/actions', (request, response) => {
+
+    // Extract URL Parameter
+    const projectId = request.params.projectId;
+
+    // Deconstruct Request Body
+    let { description, notes, completed } = request.body;
+
+    // Request Validation
+
+    if ( !description || !notes) {
+        return response.status(400).send(missingActionData);
+    }
+
+    if ( !completed ) {
+        completed = false;
+    }
+
+    // Database Helper Promise Methods
+
+    // Check To See If Project With Received Project Id Exists
+    projectDb.get(projectId)
+    .then( project => { 
+        if ( !project ) { 
+            // Possibly unreachable
+            return response.status(404).send(unableToFindProjectWithId)
+        }
+
+        // Construct New Action Object
+        const newAction = { "project_id": projectId, "description": description, "notes": notes, "completed": completed };
+
+        actionDb.insert(newAction)
+        .then(action => response.status(201).send(action))
+        .catch(() => response.status(500).send(unableToCreateAction500))
+    })
+    .catch(() => response.status(500).send(unableToGetProject500))
+})
 
 
 
