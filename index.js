@@ -263,6 +263,36 @@ server.put('/api/actions/:actionId', (request, response) => {
 });
 
 
+/// ##### DELETE Individual Project Endpoint #####
+
+server.delete('/api/actions/:actionId',  (request, response) => {
+
+    // Extract URL Parameters
+    const actionId = request.params.actionId;
+
+    // Database Helper Promise Methods
+
+    actionDb.get(actionId)
+    .then( action => { 
+        
+        if ( !action ) { 
+            // Possibly unreachable
+            return response.status(404).send(unableToFindActionWithId)
+        }
+
+        actionDb.remove(actionId)
+        .then( wasDeleted => {
+            if ( !wasDeleted ) {
+                return response.status(204).send(noActionsWereDeleted);
+            }
+            response.status(200).send(action);
+        })
+        .catch(() => response.status(500).send(unableToDeleteAction500))
+    })
+    .catch(() => response.status(500).send(unableToGetAction500))
+});
+
+
 
 /// Server Port and Listen Method
 const port = 4242;
