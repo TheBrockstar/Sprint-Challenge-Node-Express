@@ -19,10 +19,12 @@ server.use(express.json(), cors(), morgan('combined'), helmet());
 
 /// ##### Error Messages #####
 // =====- Project Database Error Messages -=====
-const unableToGetProjectList = {errorMessage: "Unable to retrieve projects."}
+const unableToFindProjectWithId = { errorMessage: "Unable to find a project with the specified project Id." }
+const unableToGetProjectList500 = { errorMessage: "Unable to retrieve projects." }
+const unableToGetProject500 = { errorMessage: "Unable to retrieve project." }
 
 // =====- Action Database Error Messages -=====
-const unableToGetActionList = {errorMessage: "Unable to retrieve actions."}
+const unableToGetActionList = { errorMessage: "Unable to retrieve actions." }
 
 
 //// ==========- Project Database Endpoints -==========
@@ -33,11 +35,30 @@ server.get('/api/projects', (request, response) => {
 
     // Database Helper Promise Method
     projectDb.get()
-    .then(projects => response.status(200).send(projects))
-    .catch(() => response.status(500).send(unableToGetProjectList))
+    .then( projects => response.status(200).send(projects))
+    .catch(() => response.status(500).send(unableToGetProjectList500))
 });
 
+/// ##### READ Individual Project Endpoint #####
 
+server.get('/api/projects/:projectId', (request, response) => {
+
+    // Request Handling
+    const projectId = request.params.projectId;
+
+    console.log(projectId);
+
+    // Database Helper Promise Method
+    projectDb.get(projectId)
+    .then( project => { 
+        if ( !project ) { 
+            // Possibly unreachable
+            return response.status(404).send(unableToFindProjectWithId)
+        }
+        response.status(200).send(project)
+    })
+    .catch(() => response.status(500).send(unableToGetProject500))
+})
 
 //// ==========- Action Database Endpoints -==========
 
